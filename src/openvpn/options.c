@@ -130,6 +130,9 @@ static const char usage_message[] =
     "                      udp6, tcp6-server, tcp6-client\n"
     "--proto-force p : only consider protocol p in list of connection profiles.\n"
     "                  p = udp or tcp\n"
+#if defined(ENABLE_MPTCP)
+    "--mptcp     : Enable Multipath TCP on the TCP connections.\n"
+#endif
     "--connect-retry n [m] : For client, number of seconds to wait between\n"
     "                  connection retries (default=%d). On repeated retries\n"
     "                  the wait time is exponentially increased to a maximum of m\n"
@@ -903,6 +906,11 @@ init_options(struct options *o, const bool init_gc)
     }
 #endif /* _WIN32 */
     o->allow_recursive_routing = false;
+
+#if defined(ENABLE_MPTCP)
+    o->enable_mptcp = false;
+#endif
+    
 }
 
 void
@@ -8839,6 +8847,18 @@ add_option(struct options *options,
             goto err;
         }
     }
+#if defined(ENABLE_MPTCP)   
+    else if (streq(p[0], "mptcp"))
+    {
+        VERIFY_PERMISSION(OPT_P_GENERAL);
+        if (p[1])
+        {
+            msg(msglevel, "--mptcp does not accept any parameters");
+            goto err;
+        }
+        options->enable_mptcp = true;
+    }
+#endif
     else
     {
         int i;

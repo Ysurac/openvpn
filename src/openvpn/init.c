@@ -3450,6 +3450,9 @@ do_init_socket_1(struct context *c, const int mode)
 #ifdef ENABLE_DEBUG
                             c->options.gremlin,
 #endif
+#if defined(ENABLE_MPTCP)
+                            c->options.enable_mptcp,
+#endif
                             c->options.ce.bind_local,
                             c->options.ce.remote_float,
                             c->options.inetd,
