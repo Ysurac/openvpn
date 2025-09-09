@@ -3341,7 +3341,6 @@ do_init_crypto_tls(struct context *c, const unsigned int flags)
 #ifdef ENABLE_DEBUG
     to.gremlin = c->options.gremlin;
 #endif
-
     to.plugins = c->plugins;
 
 #ifdef ENABLE_MANAGEMENT

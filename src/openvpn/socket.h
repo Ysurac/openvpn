@@ -121,6 +121,9 @@ struct link_socket_info
     sa_family_t af;                     /* Address family like AF_INET, AF_INET6 or AF_UNSPEC*/
     bool bind_ipv6_only;
     int mtu_changed;            /* Set to true when mtu value is changed */
+#if defined(ENABLE_MPTCP)
+    bool multipath;
+#endif
 };
 
 /*
@@ -243,6 +246,9 @@ struct link_socket
 
 #ifdef ENABLE_DEBUG
     int gremlin; /* --gremlin bits */
+#endif
+#if defined(ENABLE_MPTCP)
+    bool enable_mptcp;
 #endif
 };
 
@@ -468,6 +474,10 @@ bool mac_addr_safe(const char *mac_addr);
 bool ipv6_addr_safe(const char *ipv6_text_addr);
 
 socket_descriptor_t create_socket_tcp(struct addrinfo *);
+
+#ifdef ENABLE_MPTCP
+socket_descriptor_t create_socket_mptcp(struct addrinfo *);
+#endif
 
 socket_descriptor_t socket_do_accept(socket_descriptor_t sd,
                                      struct link_socket_actual *act,

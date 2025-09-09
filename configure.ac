@@ -314,6 +314,12 @@ AC_ARG_WITH(
 	[with_openssl_engine="auto"]
 )
 
+AC_ARG_WITH(mptcp,
+	[AS_HELP_STRING([--without-mptcp],[Disable Multipath TCP support])],
+	[enable_mptcp=no],
+	[enable_mptcp=yes]
+)
+
 AC_ARG_VAR([PLUGINDIR], [Path of plug-in directory @<:@default=LIBDIR/openvpn/plugins@:>@])
 if test -n "${PLUGINDIR}"; then
 	plugindir="${PLUGINDIR}"
@@ -887,6 +893,22 @@ case "$host" in
 		AC_DEFINE(HAVE_LIBCAPNG, 1, [Enable libcap-ng support])
 	;;
 esac
+
+
+dnl
+dnl Checking Multipath TCP support on Linux
+dnl
+case "$host" in
+	*-*-linux*)
+		AC_MSG_CHECKING([Multipath TCP support ])
+		AS_IF([test "x$enable_mptcp" != xno],
+			[AC_DEFINE([ENABLE_MPTCP], [1],
+ 			[AC_MSG_RESULT([Multipath TCP is enabled on this system])] )],
+ 			[ AC_MSG_RESULT([Multipath TCP is not enabled. On Linux, you need a kernel >= 5.15 and ensure that sysctl.net.mptcp_enabled is set to 1]) ],
+		)
+	;;
+esac
+
 
 
 if test "${with_crypto_library}" = "openssl"; then
