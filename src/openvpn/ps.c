@@ -36,6 +36,14 @@
 
 #include "memdbg.h"
 
+
+#if defined(ENABLE_MPTCP)
+#ifndef IPPROTO_MPTCP
+#define IPPROTO_MPTCP 262
+#endif
+#endif
+
+
 struct port_share *port_share = NULL; /* GLOBAL */
 
 /* size of i/o buffers */
@@ -417,7 +425,11 @@ proxy_entry_new(struct proxy_connection **list, struct event_set *es,
     struct proxy_connection *cp;
 
     /* connect to port share server */
+#if defined(ENABLE_MPTCP)
+    if ((sd_server = socket(server_addr.addr.sa.sa_family, SOCK_STREAM, IPPROTO_MPTCP)) < 0)
+#else
     if ((sd_server = socket(server_addr.addr.sa.sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0)
+#endif
     {
         msg(M_WARN | M_ERRNO, "PORT SHARE PROXY: cannot create socket");
         return false;
