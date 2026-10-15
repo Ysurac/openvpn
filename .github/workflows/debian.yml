@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["debian:bookworm", "debian:trixie", "ubuntu:noble"]
+        image: ["debian:trixie", "ubuntu:noble"]
         arch: [amd64, arm64]
         include:
           - arch: amd64
