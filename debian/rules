@@ -3,6 +3,8 @@
 # LTO breaks the -Wl,--wrap mocks used by the unit tests (Ubuntu enables it by default).
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all optimize=-lto
 
+include /usr/share/dpkg/architecture.mk
+
 %:
 	dh $@
 
@@ -12,6 +14,7 @@ override_dh_auto_configure:
 		--with-crypto-library=openssl \
 		--enable-pkcs11 \
 		--enable-systemd \
+		SYSTEMD_ASK_PASSWORD=/usr/bin/systemd-ask-password \
 		SYSTEMD_UNIT_DIR=/usr/lib/systemd/system \
 		TMPFILES_DIR=/usr/lib/tmpfiles.d
 
@@ -23,3 +26,14 @@ endif
 
 execute_after_dh_auto_install:
 	find debian/openvpn -name '*.la' -delete
+	# /run/openvpn is used by openvpn@.service (Debian layout)
+	cat debian/tmpfiles-run-openvpn.conf >> debian/openvpn/usr/lib/tmpfiles.d/openvpn.conf
+
+# Plugin paths used by Debian's openvpn package
+execute_before_dh_link:
+	dh_link usr/lib/$(DEB_HOST_MULTIARCH)/openvpn/plugins/openvpn-plugin-auth-pam.so usr/lib/openvpn/openvpn-plugin-auth-pam.so
+	dh_link usr/lib/$(DEB_HOST_MULTIARCH)/openvpn/plugins/openvpn-plugin-down-root.so usr/lib/openvpn/openvpn-plugin-down-root.so
+
+# Like Debian: do not stop or restart running tunnels on package upgrade
+override_dh_installsystemd:
+	dh_installsystemd --no-restart-after-upgrade --no-stop-on-upgrade
