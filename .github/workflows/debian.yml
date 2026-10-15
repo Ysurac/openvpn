@@ -1,0 +1,90 @@
+---
+name: Debian packages
+
+on:
+  push:
+    branches: [mptcp]
+    tags: ['*mptcp*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deb:
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:bookworm", "debian:trixie", "ubuntu:noble"]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+
+    name: "${{matrix.image}} - ${{matrix.arch}}"
+    runs-on: ${{matrix.runner}}
+    container: ${{matrix.image}}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: Install build tools
+        run: apt-get update && apt-get install -y --no-install-recommends build-essential devscripts equivs git ca-certificates
+      - name: Checkout OpenVPN
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install build dependencies
+        run: mk-build-deps --install --remove --tool 'apt-get -y --no-install-recommends' debian/control
+      - name: Set package version
+        run: |
+          . /etc/os-release
+          upstream=$(sed -n 's/^define(\[PRODUCT_VERSION_\(MAJOR\|MINOR\|PATCH\)\], \[\(.*\)\])$/\2/p' version.m4 | tr '\n' '.' | sed 's/\.\././; s/\.$//')
+          version="${upstream}+mptcp.$(date -u +%Y%m%d).g${GITHUB_SHA::7}~${VERSION_CODENAME}"
+          echo "Package version: ${version}"
+          dch --newversion "${version}" --distribution "${VERSION_CODENAME}" --force-distribution \
+              "Build of ${GITHUB_REF_NAME} at ${GITHUB_SHA}."
+        env:
+          DEBEMAIL: ycarus@zugaina.org
+          DEBFULLNAME: Ycarus (Yannick Chabanois)
+      - name: Build package
+        run: dpkg-buildpackage -b -us -uc
+      - name: Collect packages
+        run: |
+          mkdir out
+          mv ../*.deb ../*.buildinfo ../*.changes out/
+          dpkg-deb --info out/openvpn_*.deb
+          dpkg-deb --contents out/openvpn_*.deb
+      - name: Smoke test
+        run: |
+          apt-get install -y ./out/openvpn_*.deb
+          openvpn --version
+          openvpn --help | grep -- --mptcp
+      - name: Set artifact name
+        id: name
+        run: echo "name=openvpn-mptcp-$(echo '${{matrix.image}}' | tr ':' '-')-${{matrix.arch}}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{steps.name.outputs.name}}
+          path: out/
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: deb
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: openvpn-mptcp-*
+          path: dist
+      - name: Publish release
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 \
+            || gh release create "${GITHUB_REF_NAME}" --verify-tag \
+                 --title "OpenVPN ${GITHUB_REF_NAME}" \
+                 --notes "OpenVPN with Multipath TCP support, built from ${GITHUB_SHA}. Debian/Ubuntu packages for amd64 and arm64."
+          gh release upload "${GITHUB_REF_NAME}" dist/*/openvpn_*.deb --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

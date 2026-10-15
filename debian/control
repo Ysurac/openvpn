@@ -1,0 +1,29 @@
+Source: openvpn
+Section: net
+Priority: optional
+Maintainer: Ycarus (Yannick Chabanois) <ycarus@zugaina.org>
+Build-Depends: debhelper-compat (= 13),
+               libcap-ng-dev,
+               libcmocka-dev,
+               liblz4-dev,
+               liblzo2-dev,
+               libnl-genl-3-dev,
+               libpam0g-dev,
+               libpkcs11-helper1-dev,
+               libssl-dev,
+               libsystemd-dev,
+               pkgconf | pkg-config,
+               python3-docutils
+Standards-Version: 4.7.0
+Homepage: https://github.com/Ysurac/openvpn
+Rules-Requires-Root: no
+
+Package: openvpn
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: virtual private network daemon (with Multipath TCP support)
+ OpenVPN is an application to securely tunnel IP networks over a
+ single UDP or TCP port.
+ .
+ This build adds the --mptcp option, which opens TCP connections as
+ Multipath TCP sockets (Linux kernel >= 5.15 with net.mptcp.enabled=1).

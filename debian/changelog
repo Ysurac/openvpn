@@ -1,0 +1,5 @@
+openvpn (2.7.8+mptcp) unstable; urgency=medium
+
+  * OpenVPN 2.7.8 with Multipath TCP support.
+
+ -- Ycarus (Yannick Chabanois) <ycarus@zugaina.org>  Thu, 15 Oct 2026 12:00:00 +0200
