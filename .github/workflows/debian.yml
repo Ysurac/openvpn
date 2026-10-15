@@ -61,7 +61,8 @@ jobs:
         run: |
           apt-get install -y ./out/openvpn_*.deb
           openvpn --version
-          openvpn --help | grep -- --mptcp
+          # openvpn --help exits with status 1 by design
+          { openvpn --help || true; } | grep -- --mptcp
       - name: Set artifact name
         id: name
         run: echo "name=openvpn-mptcp-$(echo '${{matrix.image}}' | tr ':' '-')-${{matrix.arch}}" >> "$GITHUB_OUTPUT"
