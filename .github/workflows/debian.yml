@@ -26,6 +26,9 @@ jobs:
     name: "${{matrix.image}} - ${{matrix.arch}}"
     runs-on: ${{matrix.runner}}
     container: ${{matrix.image}}
+    defaults:
+      run:
+        shell: bash
     env:
       DEBIAN_FRONTEND: noninteractive
     steps:
